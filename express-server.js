@@ -44,6 +44,9 @@ app.get('/urls/:shortURL', (req, res) => {
 app.get('/u/:shortURL', (req, res) => {
   const shortURL = (req.params.shortURL);
   const longURL = urlDatabase[shortURL];
+  if (!urlDatabase[shortURL]) {
+    return false;
+  }
   // console.log(longURL);
   res.redirect(longURL);
 });
