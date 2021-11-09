@@ -16,7 +16,6 @@ app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
   res.send('Hello!');
-  console.log(generateRandomString());
 });
 
 app.get('/urls', (req, res) => {
@@ -29,8 +28,11 @@ app.get('/urls/new', (req, res) => {
 });
 
 app.post('/urls', (req, res) => {
-  console.log(req.body);
-  res.send('OK');
+  // console.log(req.body);
+  const newShortURL = generateRandomString();
+  urlDatabase[newShortURL] = req.body.longURL; 
+  // console.log(urlDatabase);
+  res.redirect(302, `/urls/${newShortURL}`);
 });
 
 app.get('/urls/:shortURL', (req, res) => {
@@ -39,6 +41,12 @@ app.get('/urls/:shortURL', (req, res) => {
   res.render('urls_show', templateVars);
 });
 
+app.get('/u/:shortURL', (req, res) => {
+  const shortURL = (req.params.shortURL);
+  const longURL = urlDatabase[shortURL];
+  // console.log(longURL);
+  res.redirect(longURL);
+});
 
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
