@@ -9,6 +9,21 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
+      <% if(username) {%>
+        <div class="nav-item">
+          <form method="POST" action="/logout">
+            <label style="color: white">Logged in as: <%= username %>!</label>
+            <button type="submit" style="border: 1px solid white; background-color: #28a745; color: white; border-radius: 4px">Logout</button>
+          </form>
+        </div>
+      <% } else{ %>
+        <div class="nav-item">
+          <form method="POST" action="/login">
+            <input name="username" placeholder="Username" style="border: 1px solid white; border-radius: 4px"/>
+            <button type="submit" style="border: 1px solid white; background-color: #28a745; color: white; border-radius: 4px">Submit</button>
+          </form>
+        </div>
+      <% } %>
     </div>
   </nav>
 </header>
