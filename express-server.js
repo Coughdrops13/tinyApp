@@ -48,6 +48,17 @@ const loginVerifier = function(userEmail, userPassword) {
   }
   return false;
 };
+const findUserByEmail = function(email, users) {
+  for (const key in users) {
+    if (users[key].email === email) {
+      return users[key];
+    }
+  }
+  // if no user, go to register
+  // if user, check that user password matches given password
+
+  // in register: if user is found go to login, else create new user
+};
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
@@ -72,16 +83,17 @@ app.post('/login', (req, res) => {
   const userEmail = req.body.email;
   const userPassword = req.body.password;
   const userID = loginVerifier(userEmail, userPassword);
-  if(!lookupEmail) {
-    res.status(403).send('Incorrect Email');
+  if(!lookupEmail(userEmail)) {
+    return res.status(403).send('Incorrect Email');
   }
-  if (!lookupPassword) {
-    res.status(403).send('Incorrect Password');
+  if (!lookupPassword(userPassword)) {
+    return res.status(403).send('Incorrect Password');
   }
   if (userID) {
     res.cookie('user_id', userID);
-    res.redirect('/urls');
+    return res.redirect('/urls');
   } 
+  return res.status(500).send('something went really wrong');
 });
 
 app.post('/logout', (req, res) => {
@@ -103,6 +115,8 @@ app.post('/register', (req, res) => {
     email: req.body.email,
     password: req.body.password,
   };
+  
+
   if(lookupEmail(newUser.email)) {
     return res.status(400).send('email already exists');
   }
