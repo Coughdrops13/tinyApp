@@ -23,6 +23,31 @@ const generateRandomString = function() {
   const shortURL = Math.random().toString(16).substr(2, 6);
   return shortURL;
 };
+const lookupEmail = function(userEmail) {
+  for (const key in users) {
+    if (users[key].email === userEmail) {
+      return true;
+    }
+  }
+  return false;
+};
+const lookupPassword = function(userPassword) {
+  for (const key in users) {
+    if (users[key].password === userPassword) {
+      return true;
+    }
+  }
+  return false;
+};
+const loginVerifier = function(userEmail, userPassword) {
+  for (const key in users) {
+    if (users[key].email === userEmail && users[key].password === userPassword) {
+      
+      return users[key].id;
+    }
+  }
+  return false;
+};
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
@@ -32,22 +57,41 @@ app.get('/', (req, res) => {
   res.send('Hello!');
 });
 
+app.get('/login', (req, res) => {
+  const userID = req.cookies.user_id;
+  const user = users[userID];
+  const templateVars = { user, };
+  if (user) {
+    res.redirect('/urls');
+  } else {
+  res.render('login', templateVars);
+  }
+});
+
 app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username);
-  res.redirect('/urls');
+  const userEmail = req.body.email;
+  const userPassword = req.body.password;
+  const userID = loginVerifier(userEmail, userPassword);
+  if(!lookupEmail) {
+    res.status(403).send('Incorrect Email');
+  }
+  if (!lookupPassword) {
+    res.status(403).send('Incorrect Password');
+  }
+  if (userID) {
+    res.cookie('user_id', userID);
+    res.redirect('/urls');
+  } 
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
 app.get('/register', (req, res) => {
   const userID = req.cookies.user_id;
-  console.log('GET register', users);
-  console.log('user', users[userID]);
   const user = users[userID];
-  // console.log(user);
   const templateVars = { user, };
   res.render('registration', templateVars);
 });
@@ -59,14 +103,21 @@ app.post('/register', (req, res) => {
     email: req.body.email,
     password: req.body.password,
   };
+  if(lookupEmail(newUser.email)) {
+    return res.status(400).send('email already exists');
+  }
+  if (newUser.email === '' || newUser.password === '') {
+    return res.status(400).send('enter stuff');
+  }
   users[newUserID] = newUser;
-  console.log(users);
+  // console.log(users);
   res.cookie('user_id', newUserID)
   res.redirect('/urls');
 });
 
 app.get('/urls', (req, res) => {
   // console.log(req.cookies);
+  console.log('USERS OBJ:', users);
   const userID = req.cookies.user_id;
   const user = users[userID];
   const templateVars = { urls: urlDatabase, user, };

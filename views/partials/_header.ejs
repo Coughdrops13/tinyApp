@@ -18,9 +18,14 @@
         </div>
       <% } else{ %>
         <div class="nav-item">
-          <form method="POST" action="/login">
-            <input name="username" placeholder="Username" style="border: 1px solid white; border-radius: 4px"/>
-            <button type="submit" style="border: 1px solid white; background-color: #28a745; color: white; border-radius: 4px">Submit</button>
+          <form method="GET" action="/login">
+            <button type="submit" style="border: 1px solid white; background-color: #28a745; color: white; border-radius: 4px">Login</button>
+          </form>
+        </div>
+        <div class="nav-item" style=" width: 20px"></div>
+        <div class="nav-item">
+          <form method="GET" action="/register">
+            <button type="submit" style="border: 1px solid white; background-color: #28a745; color: white; border-radius: 4px">Register</button>
           </form>
         </div>
       <% } %>
