@@ -90,10 +90,11 @@ app.post('/login', (req, res) => {
   bcrypt.compare(userPassword, user.password, (err, success) => {
     if(!success){
       return res.status(400).send('password does not match')
+    } else {
+      req.session.user_id = user.id;
+      return res.redirect('/urls');
     }
   });
-  req.session.user_id = user.id;
-  return res.redirect('/urls');
 });
 
 
@@ -145,7 +146,7 @@ app.post('/register', (req, res) => {
         const newUserID = generateRandomString();
         const newUser = {
           id: newUserID,
-          email: req.body.email,
+          email: userEmail,
           password: hash,
         };
         users[newUserID] = newUser;
