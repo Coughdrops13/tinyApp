@@ -6,11 +6,11 @@ If you are reading this, the market is flooded with TinyApps; that is because we
 
 ## Final Product
 
-!["Register!!!"](#)
+!["Register!!! Make the most of your TinyApp experience by registering and automatically permitting us to send yo bi-hourly emails!"](https://github.com/Coughdrops13/tinyApp/blob/main/docs/registration_page.png?raw=true)
 
-!["View!!!"](#)
+!["View!!! All your short little urls in one place."](https://github.com/Coughdrops13/tinyApp/blob/main/docs/urls_page.png?raw=true)
 
-!["Edit!!!"](#)
+!["Edit!!! So you like your short little url but you want it to go somewhere else? DO IT."](https://github.com/Coughdrops13/tinyApp/blob/main/docs/edit_page.png?raw=true)
 
 
 ## Dependencies
