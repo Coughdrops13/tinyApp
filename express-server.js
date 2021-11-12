@@ -1,11 +1,21 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-// const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const PORT = 8080;
 const { findUserByEmail, generateRandomString } = require('./helpers');
+
+
+app.use(bodyParser.urlencoded({extended: true}));
+// app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2']
+}));
+app.set('view engine', 'ejs');
+
+
 const urlDatabase = {
   'b2xVn2': {
    longURL: 'http://www.lighthouselabs.ca',
@@ -20,45 +30,25 @@ const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: "2"
   },
  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "dishwasher-funk"
+    password: "3"
   }
 };
-// const generateRandomString = function() {
-//   const shortURL = Math.random().toString(16).substr(2, 6);
-//   return shortURL;
-// };
-// const lookupPassword = function(userPassword, user) {
-//     if (user.password === userPassword) {
-//       return true;
-//     }
-//     return null;
-// };
-// const findUserByEmail = function(email, users) {
-//   for (const key in users) {
-//     if (users[key].email === email) {
-//       return users[key];
-//     }
-//   }
-//   return null;
-// };
-
-app.use(bodyParser.urlencoded({extended: true}));
-// app.use(cookieParser());
-app.use(cookieSession({
-  name: 'session',
-  keys: ['key1', 'key2']
-}));
-app.set('view engine', 'ejs');
 
 
-// not much going on here
+
 app.get('/', (req, res) => {
-  res.send('Hello!');
+  const userID = req.session.user_id;
+  const user = users[userID];
+  if (user) {
+    return res.redirect('/urls');
+  } else {
+    return res.redirect('/login');
+  }
 });
 
 // GET /login
@@ -102,9 +92,6 @@ app.post('/login', (req, res) => {
       return res.status(400).send('password does not match')
     }
   });
-  // if(!lookupPassword(userPassword, user)) {
-  //   return res.status(403).send('Incorrect Password');
-  // }
   req.session.user_id = user.id;
   return res.redirect('/urls');
 });
@@ -112,9 +99,6 @@ app.post('/login', (req, res) => {
 
 // POST /logout
 // just a logout button that should appear in _header.ejs IF logged in (should already be taken care of in _header.ejs)
-
-// *** Question: how does _header.ejs check user on line 12
-
 // clears cookies
 // redirects to: /urls (GET /urls)
 app.post('/logout', (req, res) => {
@@ -129,8 +113,11 @@ app.post('/logout', (req, res) => {
 app.get('/register', (req, res) => {
   const userID = req.session.user_id;
   const user = users[userID];
+  if (user) {
+    return res.redirect('/urls');
+  }
   const templateVars = { user, };
-  res.render('registration', templateVars);
+  return res.render('registration', templateVars);
 });
 
 
@@ -226,9 +213,6 @@ app.get('/urls/new', (req, res) => {
   const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = { user, };
-  // if (!user) {
-  //   res.status().redirect('/login');
-  // }
   res.render('urls_new', templateVars);
 });
 
@@ -246,11 +230,13 @@ app.get('/urls/:shortURL', (req, res) => {
     return res.status(404).send('no such short url in datbase');
   }
   const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL].longURL, user, };
+  
   if(urlDatabase[shortURL]) {
-    console.log('urlDatabase:', urlDatabase);
-    return res.render('urls_show', templateVars);
+    if (urlDatabase[shortURL].userID === userID) {
+      return res.render('urls_show', templateVars);
+    }
   }
-  return res.render('urls_new', templateVars);
+  return res.status(401).send('this is not your url to view');
 });
 
 
@@ -263,7 +249,7 @@ app.get('/urls/:shortURL', (req, res) => {
 // assigns req.body.newLongURL to longURL
 // updates the urlDatabase - urlDatabase[shortURL] = longURL
 // redirects to: /urls (GET /urls)
-app.post('/urls/:shortURL/edit', (req, res) => {
+app.post('/urls/:shortURL', (req, res) => {
   const userID = req.session.user_id;
   const user = users[userID];
   if(!user) {
@@ -278,13 +264,7 @@ app.post('/urls/:shortURL/edit', (req, res) => {
   return res.redirect('/urls');
 });
 
-app.get('/urls/:shortURL/delete', (req, res) => {
-  const userID = req.session.user_id;
-  const shortURL = req.params.shortURL;
-  if (urlDatabase[shortURL].userID !== userID) {
-    return res.send(401).send('only your urls can be deleted by you');
-  }
-});
+
 // POST /urls/:shortURL/delete
 // assigns req.params.shortURL to variable shortURL
 // uses express's delete to delete urlDatabase[shortURL]
@@ -312,10 +292,10 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 // if it does exist, redirects to: longURL
 app.get('/u/:shortURL', (req, res) => {
   const shortURL = (req.params.shortURL);
-  const longURL = urlDatabase[shortURL].longURL;
   if (!urlDatabase[shortURL]) {
-    return res.redirect('/urls');
+    return res.status(404).send('invalid url');
   }
+  const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 

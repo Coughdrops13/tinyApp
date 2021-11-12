@@ -4,7 +4,7 @@ for (const key in users) {
     return users[key];
   }
 }
-return null;
+return undefined;
 };
 
 const generateRandomString = function() {
