@@ -3,8 +3,9 @@ const app = express();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
-const cookieSession = require('cookie-session');
+// const cookieSession = require('cookie-session');
 const PORT = 8080;
+const { findUserByEmail, generateRandomString } = require('./helpers');
 const urlDatabase = {
   'b2xVn2': {
    longURL: 'http://www.lighthouselabs.ca',
@@ -27,24 +28,24 @@ const users = {
     password: "dishwasher-funk"
   }
 };
-const generateRandomString = function() {
-  const shortURL = Math.random().toString(16).substr(2, 6);
-  return shortURL;
-};
-const lookupPassword = function(userPassword, user) {
-    if (user.password === userPassword) {
-      return true;
-    }
-    return false;
-};
-const findUserByEmail = function(email, users) {
-  for (const key in users) {
-    if (users[key].email === email) {
-      return users[key];
-    }
-  }
-  return false;
-};
+// const generateRandomString = function() {
+//   const shortURL = Math.random().toString(16).substr(2, 6);
+//   return shortURL;
+// };
+// const lookupPassword = function(userPassword, user) {
+//     if (user.password === userPassword) {
+//       return true;
+//     }
+//     return null;
+// };
+// const findUserByEmail = function(email, users) {
+//   for (const key in users) {
+//     if (users[key].email === email) {
+//       return users[key];
+//     }
+//   }
+//   return null;
+// };
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
@@ -83,13 +84,23 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   const userEmail = req.body.email;
   const userPassword = req.body.password;
+  if (userEmail === '' || userPassword === '') {
+    return res.status(400).send('email and password must be specified')
+  }
+
   const user = findUserByEmail(userEmail, users);
+  
   if (!user) {
     return res.status(403).send('Unregistered Email');
   }
-  if(!lookupPassword(userPassword, user)) {
-    return res.status(403).send('Incorrect Password');
-  }
+  bcrypt.compare(userPassword, user.password, (err, success) => {
+    if(!success){
+      return res.status(400).send('password does not match')
+    }
+  });
+  // if(!lookupPassword(userPassword, user)) {
+  //   return res.status(403).send('Incorrect Password');
+  // }
   res.cookie('user_id', user.id);
   return res.redirect('/urls');
 });
@@ -137,15 +148,20 @@ app.post('/register', (req, res) => {
     return res.status(400).send('email and password must be specified')
   }
   if(!user) {
-    const newUserID = generateRandomString();
-    const newUser = {
-      id: newUserID,
-      email: req.body.email,
-      password: req.body.password,
-    };
-    users[newUserID] = newUser;
-    res.cookie('user_id', newUserID)
-    res.redirect('/urls');
+    bcrypt.genSalt(10, (err, salt) => {
+      bcrypt.hash(userPassword, salt, (err, hash) => {
+  
+        const newUserID = generateRandomString();
+        const newUser = {
+          id: newUserID,
+          email: req.body.email,
+          password: hash,
+        };
+        users[newUserID] = newUser;
+        res.cookie('user_id', newUserID)
+        res.redirect('/urls');
+      })
+    })
   }
 });
 
