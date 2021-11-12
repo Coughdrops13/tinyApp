@@ -48,7 +48,11 @@ const users = {
 // };
 
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+// app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2']
+}));
 app.set('view engine', 'ejs');
 
 
@@ -63,7 +67,7 @@ app.get('/', (req, res) => {
   // also if logged in, redirects to: /urls (GET /urls)
 // renders: login.ejs
 app.get('/login', (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = { user, };
   if (user) {
@@ -101,7 +105,7 @@ app.post('/login', (req, res) => {
   // if(!lookupPassword(userPassword, user)) {
   //   return res.status(403).send('Incorrect Password');
   // }
-  res.cookie('user_id', user.id);
+  req.session.user_id = user.id;
   return res.redirect('/urls');
 });
 
@@ -114,7 +118,7 @@ app.post('/login', (req, res) => {
 // clears cookies
 // redirects to: /urls (GET /urls)
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect('/urls');
 });
 
@@ -123,7 +127,7 @@ app.post('/logout', (req, res) => {
 // __TEMPLATEVARS__: user
 // render: registration.ejs
 app.get('/register', (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = { user, };
   res.render('registration', templateVars);
@@ -158,7 +162,7 @@ app.post('/register', (req, res) => {
           password: hash,
         };
         users[newUserID] = newUser;
-        res.cookie('user_id', newUserID)
+        req.session.user_id = newUserID;
         res.redirect('/urls');
       })
     })
@@ -170,7 +174,7 @@ app.post('/register', (req, res) => {
 // __TEMPLATEVARS__: urls, ????longURLs???, user
 // renders: urls_index.ejs
 app.get('/urls', (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
   console.log('USERS OBJ:', users);
   if (!user) {
@@ -198,7 +202,7 @@ app.get('/urls', (req, res) => {
 // assigns longURL to urlDatabase[shortURL].longURL (urls_index.ejs then adds this to its page)
 // then sends code 302 (found) and redirects to: /urls/whatever the new shortURL is
 app.post('/urls', (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
   if (!user) {
     return res.status(401).send('you must be logged in to create urls')
@@ -219,7 +223,7 @@ app.post('/urls', (req, res) => {
 // if not logged in redirects to: login
 // if logged in, renders: urls_new.ejs
 app.get('/urls/new', (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = { user, };
   // if (!user) {
@@ -235,7 +239,7 @@ app.get('/urls/new', (req, res) => {
 // if it does not exist, redirects to: /urls/new (GET /urls/new)
 // if it does exist renders: urls_show.ejs
 app.get('/urls/:shortURL', (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
   const shortURL = req.params.shortURL;
   if(!urlDatabase[shortURL]) {
@@ -260,7 +264,7 @@ app.get('/urls/:shortURL', (req, res) => {
 // updates the urlDatabase - urlDatabase[shortURL] = longURL
 // redirects to: /urls (GET /urls)
 app.post('/urls/:shortURL/edit', (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
   if(!user) {
     return res.status(401).send('must be logged in to edit urls')
@@ -275,7 +279,7 @@ app.post('/urls/:shortURL/edit', (req, res) => {
 });
 
 app.get('/urls/:shortURL/delete', (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const shortURL = req.params.shortURL;
   if (urlDatabase[shortURL].userID !== userID) {
     return res.send(401).send('only your urls can be deleted by you');
@@ -286,7 +290,7 @@ app.get('/urls/:shortURL/delete', (req, res) => {
 // uses express's delete to delete urlDatabase[shortURL]
 // redirects to: /urls (GET /urls) which should now contain one less url
 app.post('/urls/:shortURL/delete', (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
   if(!user) {
     return res.status(401).send('must be logged in to delete urls')
