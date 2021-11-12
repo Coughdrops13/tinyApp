@@ -1,9 +1,9 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
+// const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
-// const cookieSession = require('cookie-session');
 const PORT = 8080;
 const { findUserByEmail, generateRandomString } = require('./helpers');
 const urlDatabase = {
